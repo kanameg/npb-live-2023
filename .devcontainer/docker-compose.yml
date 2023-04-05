@@ -1,0 +1,15 @@
+version: '3.2'
+
+services:
+    python:
+        image: npb/npb_python:1.0
+        build: ./python
+        container_name: 'npb_python'
+        expose: 
+            - 8888
+        stdin_open: true
+        tty: true
+        working_dir: '/tmp/work'
+        volumes:
+            - ../python:/tmp/work
+        #command: sh -c 'python -u src/live_stats.py 2023 ${M} ${D} 2>&1 | tee -a get_live_stats.log'

@@ -1,0 +1,9 @@
+== JSON規格
+
+=== 規格
+RFC 8259 - The JavaScript Object Notation (JSON) Data Interchange Formatで規定されtいる
+
+* 4つのプリミティブ型（文字列、数値、Bool、null）と2つのタイプ（配列、オブジェクト）で構成される。
+* 値としては、オブジェクト、配列、数値、文字列、Bool、nullが入る。
+* オブジェクトは {"文字列": 値}で表現される
+* 配列は、 [値, 値, ...]で表現される
