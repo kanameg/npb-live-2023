@@ -1,6 +1,5 @@
 .DS_Store
 .ipynb_checkpoints
-live-stats/
 batter-stats/
 pitcher-stats/
 python/src/__pycache__/
@@ -9,6 +8,5 @@ python/src/get_live_stats.log
 python/live_stats.log
 python/batter_stats.log
 python/pitcher_stats.log
-python/live-stats/
 python/batter-stats/
 python/pitcher-stats/
