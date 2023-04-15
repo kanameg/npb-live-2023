@@ -748,6 +748,186 @@ class Event:
 # end of class Event:
 
 
+class PlayerProfile:
+    long_to_team_code = {
+        '東京ヤクルトスワローズ': 'S',
+        '広島東洋カープ': 'C',
+        '横浜DeNAベイスターズ': 'DB',
+        '阪神タイガース': 'T',
+        '中日ドラゴンズ': 'D',
+        '読売ジャイアンツ': 'G',
+        '東北楽天ゴールデンイーグルス': 'E',
+        '北海道日本ハムファイターズ': 'F',
+        'オリックス・バファローズ': 'B',
+        '埼玉西武ライオンズ': 'L',
+        '千葉ロッテマリーンズ': 'M',
+        '福岡ソフトバンクホークス': 'H',
+        }
+    short_to_team_code = {
+        'ヤクルト': 'S',
+        '広島': 'C',
+        'DeNA': 'DB',
+        '阪神': 'T',
+        '中日': 'D',
+        '巨人': 'G',
+        '楽天': 'E',
+        '日本ハム': 'F',
+        'オリックス': 'B',
+        'ライオンズ': 'L',
+        'ロッテ': 'M',
+        'ソフトバンク': 'H',
+        }
+
+    """
+    選手情報クラス
+    """
+    def __init__(self, id) -> None:
+        self._id = id
+        # Yahooからデータを取得
+        requests_user_agent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36'
+        requests_header = {
+            'User-Agent': requests_user_agent
+        }
+        url = f"https://baseball.yahoo.co.jp/npb/player/{self._id}/"
+        # print(f"URL: {url}")
+        try: 
+            res = requests.get(url, headers=requests_header)
+        except requests.exceptions.RequestException as e:
+            print("requests error occur {} ({})".format(e))
+        soup = BeautifulSoup(res.text, "lxml")
+        
+        # チーム名
+        bb = soup.find(class_='bb-head01__title')
+        self._team = bb.text if bb else None
+        self._team_code = self.long_to_team_code.get(self._team)
+        print(f"チーム: {self._team}")
+        print(f"コード: {self._team_code}")
+
+        # 名前
+        bb = soup.find(class_='bb-profile__name').find('h1')
+        self._name = bb.text if bb else None
+        # print(f"名前: {self._name}")
+        
+        # ルビ
+        bb = soup.find(class_='bb-profile__name').find('rt')
+        if bb:
+            if match := re.search(r"（(.+)）", bb.text):
+                self._ruby = match.group(1)
+            else:
+                self._ruby = None             
+        else:
+            self._ruby = None
+        # print(f"ふりがな: {self._ruby}")
+
+        # 背番号
+        bb = soup.find(class_='bb-profile__number')
+        self._number = bb.text if bb else None
+        # print(f"背番号: {self._number}")
+
+        # ボジション
+        bb = soup.find(class_='bb-profile__position')
+        self._position = bb.text if bb else None
+        # print(f"ボジション: {self._position}")
+
+        # 詳細情報
+        plist = soup.find_all(class_='bb-profile__list')            
+
+        # 出身地
+        bb = soup.find_all(class_='bb-profile__text')
+        self._birthplace = bb[0].text if bb[0] else None
+        # print(f"出身地: {self._birthplace}")
+
+        # 誕生日
+        if bb[1]:
+            if match := re.search(r"([0-9]+)年([0-9]+)月([0-9]+)日（([0-9]+)歳）", bb[1].text):
+                year = int(match.group(1))
+                month = int(match.group(2))
+                day = int(match.group(3))
+                age = int(match.group(4))
+                self._birthday = f"{year:04}-{month:02}-{day:02}"
+                self._age = age
+            else:
+                self._birthday = None
+                self._age = None
+        else:
+            self._birthday = None
+            self._age = None
+        # print(f"誕生日: {self._birthday}")
+        # print(f"年齢: {self._age}")
+
+        # 身長
+        if bb[2]:
+            if match := re.search(r"([0-9]+)cm", bb[2].text):
+                self._height = int(match.group(1))
+            else:
+                self._height = None
+        else:
+            self._height = None
+        # print(f"身長: {self._height}")
+
+        # 体重
+        if bb[3]:
+            if match := re.search(r"([0-9]+)kg", bb[3].text):
+                self._weight = int(match.group(1))
+            else:
+                self._weight = None
+        else:
+            self._weight = None
+        # print(f"体重: {self._weight}")
+
+        # 血液型
+        if bb[4]:
+            if match := re.search(r"([ABO]+)", bb[4].text):
+                self._blood_type = match.group(1)
+            else:
+                self._blood_type = None
+        else:
+            self._blood_type = None
+        # print(f"血液型: {self._blood_type}")
+
+        # 投打
+        if bb[5]:
+            if match := re.search(r"(.)投げ(.)打ち", bb[5].text):
+                self._handed_pitch = match.group(1)
+                self._handed_bat = match.group(2)
+            else:
+                self._handed_pitch = None
+                self._handed_bat = None
+        else:
+            self._handed_pitch = None
+            self._handed_bat = None
+        # print(f"投: {self._handed_pitch}")
+        # print(f"打: {self._handed_bat}")
+
+        # 通算年
+        for pl in plist:
+            if (pl.find(class_='bb-profile__title').text == 'プロ通算年'):
+                if match := re.search(r"([1-9][0-9]*)年", pl.find(class_='bb-profile__text').text):
+                    self._year = int(match.group(1))
+                    break
+                else:
+                    self._year = None
+            else:
+                self._year = None
+        # print(f"通算年: {self._year}")
+        pass
+
+    """
+    public method
+    """
+    def profile(self):
+        """
+        選手情報をリストで取得
+        """
+        # ID チーム名, 背番号, 名前, ふりがな, 
+        return [
+            self._id, self._team_code, self._number, self._name, self._ruby,
+            self._height, self._weight,
+            self._handed_pitch, self._handed_bat, self._year , 
+            self._birthday, self._age, self._birthplace, self._blood_type
+        ]
+
+
 
 
 
